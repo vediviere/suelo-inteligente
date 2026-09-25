@@ -1,16 +1,17 @@
 {
   "expo": {
-    "name": "sensor-suelo-mobile",
-    "slug": "sensor-suelo-mobile",
+    "name": "Suelo Inteligente",
+    "slug": "suelo-inteligente",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sensorsuelomobile",
-    "userInterfaceStyle": "automatic",
+    "scheme": "suelointeligente",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.vediv.suelointeligente",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -37,6 +38,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "555069a6-eb21-451c-bb28-860086ff8945"
+      }
     }
   }
 }
