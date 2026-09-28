@@ -185,10 +185,19 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { oscuro, colores, cambiarTema } = useTheme();
   const themeStyles = crearTema(colores, oscuro);
-  const { lectura, analisis, cargando, error, actualizarDatos } = useSensor();
+  const {
+    lectura,
+    analisis,
+    cargando,
+    error,
+    lecturasPendientes,
+    actualizarDatos,
+    sincronizar,
+  } = useSensor();
 
   const [clima, setClima] = useState<ClimaActual | null>(null);
   const [cargandoClima, setCargandoClima] = useState(true);
+  const [sincronizando, setSincronizando] = useState(false);
   const [errorClima, setErrorClima] = useState<string | null>(null);
 
   const cargarClima = useCallback(async () => {
@@ -214,6 +223,19 @@ export default function HomeScreen() {
 
   async function actualizarTodo() {
     await Promise.all([actualizarDatos(), cargarClima()]);
+  }
+
+  async function sincronizarAhora() {
+    if (sincronizando) {
+      return;
+    }
+
+    try {
+      setSincronizando(true);
+      await sincronizar();
+    } finally {
+      setSincronizando(false);
+    }
   }
 
   function obtenerEstadoVariable(...variables: string[]): EstadoMedicion {
@@ -403,6 +425,45 @@ export default function HomeScreen() {
                 color={oscuro ? "#D6B8FF" : "#E59A18"}
               />
             </Pressable>
+            {lecturasPendientes > 0 && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.syncButton,
+                  {
+                    backgroundColor: oscuro
+                      ? "rgba(35, 30, 44, 0.88)"
+                      : "rgba(255, 255, 255, 0.88)",
+                    borderColor: oscuro ? colores.borde : "#D7DDD8",
+                  },
+                  pressed && styles.themeButtonPressed,
+                ]}
+                onPress={sincronizarAhora}
+                disabled={sincronizando}
+                accessibilityRole="button"
+                accessibilityLabel={`${lecturasPendientes} lecturas pendientes de sincronización`}
+              >
+                {sincronizando ? (
+                  <ActivityIndicator size="small" color={colores.principal} />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="cloud-upload-outline"
+                      size={19}
+                      color={colores.principal}
+                    />
+
+                    <Text
+                      style={[
+                        styles.syncButtonText,
+                        { color: colores.principal },
+                      ]}
+                    >
+                      {lecturasPendientes}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -1069,6 +1130,22 @@ const styles = StyleSheet.create({
   },
   themeButtonPressed: {
     opacity: 0.7,
+  },
+  syncButton: {
+    minWidth: 40,
+    height: 40,
+    marginTop: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  syncButtonText: {
+    fontSize: 13,
+    fontWeight: "bold",
   },
 });
 

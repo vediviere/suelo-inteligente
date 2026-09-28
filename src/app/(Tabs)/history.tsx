@@ -78,6 +78,23 @@ function HistoryCard({
           </Text>
 
           <Text style={styles.identifier}>Análisis: {item.analisis_id}</Text>
+
+          <View style={styles.origin}>
+            <Ionicons
+              name="location-outline"
+              size={15}
+              color={colores.principal}
+            />
+
+            <Text style={styles.originText} numberOfLines={1}>
+              {item.campo_nombre ?? "Campo no identificado"} ·{" "}
+              {item.cultivo ?? "Cultivo no identificado"}
+            </Text>
+          </View>
+
+          <Text style={styles.sensorText}>
+            Sensor: {item.dispositivo_id ?? "No identificado"}
+          </Text>
         </View>
 
         <View style={[styles.badge, { backgroundColor: estado.fondo }]}>
@@ -350,6 +367,35 @@ export default function HistoryScreen() {
                   </View>
                 </View>
 
+                <Text style={styles.detailSectionTitle}>
+                  Origen de la lectura
+                </Text>
+
+                <DetailRow
+                  icon="location-outline"
+                  title="Campo"
+                  value={
+                    seleccionado.campo_nombre
+                      ? `${seleccionado.campo_nombre} (${seleccionado.campo_id})`
+                      : "No identificado"
+                  }
+                  color="#2E7D32"
+                />
+
+                <DetailRow
+                  icon="leaf-outline"
+                  title="Cultivo"
+                  value={seleccionado.cultivo ?? "No identificado"}
+                  color="#48A653"
+                />
+
+                <DetailRow
+                  icon="hardware-chip-outline"
+                  title="Sensor"
+                  value={seleccionado.dispositivo_id ?? "No identificado"}
+                  color="#8854D0"
+                />
+
                 <Text style={styles.detailSectionTitle}>Mediciones</Text>
 
                 <DetailRow
@@ -483,6 +529,23 @@ function crearEstilos(
     },
     identifier: {
       marginTop: 3,
+      fontSize: 12,
+      color: colores.textoSecundario,
+    },
+    origin: {
+      marginTop: 9,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+    },
+    originText: {
+      flex: 1,
+      fontSize: 13,
+      fontWeight: "600",
+      color: colores.texto,
+    },
+    sensorText: {
+      marginTop: 4,
       fontSize: 12,
       color: colores.textoSecundario,
     },

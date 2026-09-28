@@ -17,6 +17,8 @@ export interface LecturaSensor {
   lectura_id: string;
   escenario_id: string;
   dispositivo_id: string;
+  campo_id: string;
+  campo_nombre: string;
   fecha_hora: string;
   lecturas: Lecturas;
   contexto_suelo: ContextoSuelo;

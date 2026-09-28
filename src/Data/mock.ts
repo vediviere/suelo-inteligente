@@ -5,6 +5,8 @@ export const lecturaMock: LecturaSensor = {
   lectura_id: "lec_001",
   escenario_id: "esc_01",
   dispositivo_id: "sensor_01",
+  campo_id: "campo_001",
+  campo_nombre: "Parcela norte",
   fecha_hora: "2026-09-23T16:30:00Z",
   lecturas: {
     ph: 6.5,

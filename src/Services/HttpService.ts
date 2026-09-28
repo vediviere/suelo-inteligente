@@ -21,7 +21,8 @@ export async function obtenerJson<T>(
 
         if (contenido) {
           const errorApi = JSON.parse(contenido);
-          mensaje = errorApi.message ?? errorApi.title ?? mensaje;
+          mensaje =
+            errorApi.mensaje ?? errorApi.message ?? errorApi.title ?? mensaje;
         }
       } catch {
         // Se mantiene el mensaje HTTP original.

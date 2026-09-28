@@ -5,6 +5,8 @@ export const escenariosMock: LecturaSensor[] = [
     lectura_id: "lec_ideal",
     escenario_id: "esc_ideal",
     dispositivo_id: "sensor_01",
+    campo_id: "campo_001",
+    campo_nombre: "Parcela norte",
     fecha_hora: new Date().toISOString(),
     lecturas: {
       ph: 6.5,
@@ -23,7 +25,9 @@ export const escenariosMock: LecturaSensor[] = [
   {
     lectura_id: "lec_seco",
     escenario_id: "esc_seco",
-    dispositivo_id: "sensor_01",
+    dispositivo_id: "sensor_02",
+    campo_id: "campo_002",
+    campo_nombre: "Invernadero principal",
     fecha_hora: new Date().toISOString(),
     lecturas: {
       ph: 6.4,
@@ -42,7 +46,9 @@ export const escenariosMock: LecturaSensor[] = [
   {
     lectura_id: "lec_acido",
     escenario_id: "esc_acido",
-    dispositivo_id: "sensor_01",
+    dispositivo_id: "sensor_03",
+    campo_id: "campo_003",
+    campo_nombre: "Parcela sur",
     fecha_hora: new Date().toISOString(),
     lecturas: {
       ph: 5.3,

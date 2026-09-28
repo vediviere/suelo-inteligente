@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 import {
   ReactNode,
   createContext,
@@ -10,7 +11,11 @@ import {
 import { HistorialItem, historialMock } from "../Data/historyMock";
 import { ResultadoAnalisis } from "../Models/analysis";
 import { LecturaSensor } from "../Models/sensor";
-import { obtenerDatosProcesados } from "../Services/SensorService";
+import {
+  obtenerDatosProcesados,
+  sincronizarLecturasPendientes,
+} from "../Services/SensorService";
+import { contarLecturasPendientes } from "../Services/SyncService";
 
 const HISTORIAL_KEY = "@suelo_inteligente_historial";
 
@@ -20,8 +25,10 @@ interface SensorContextValue {
   historial: HistorialItem[];
   cargando: boolean;
   error: string | null;
+  lecturasPendientes: number;
   actualizarDatos: () => Promise<void>;
   limpiarHistorial: () => Promise<void>;
+  sincronizar: () => Promise<void>;
 }
 
 const SensorContext = createContext<SensorContextValue | undefined>(undefined);
@@ -32,6 +39,7 @@ export function SensorProvider({ children }: { children: ReactNode }) {
   const [historial, setHistorial] = useState<HistorialItem[]>(historialMock);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lecturasPendientes, setLecturasPendientes] = useState(0);
   const historialRef = useRef<HistorialItem[]>(historialMock);
   const cargandoRef = useRef(false);
 
@@ -55,6 +63,16 @@ export function SensorProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function actualizarCantidadPendiente() {
+    const cantidad = await contarLecturasPendientes();
+    setLecturasPendientes(cantidad);
+  }
+
+  async function sincronizar() {
+    await sincronizarLecturasPendientes();
+    await actualizarCantidadPendiente();
+  }
+
   async function actualizarDatos() {
     if (cargandoRef.current) {
       return;
@@ -72,6 +90,11 @@ export function SensorProvider({ children }: { children: ReactNode }) {
 
       const nuevoRegistro: HistorialItem = {
         analisis_id: datos.analisis.analisis_id,
+        lectura_id: datos.lectura.lectura_id,
+        dispositivo_id: datos.lectura.dispositivo_id,
+        campo_id: datos.lectura.campo_id,
+        campo_nombre: datos.lectura.campo_nombre,
+        cultivo: datos.lectura.contexto_suelo.cultivo,
         fecha_procesamiento: datos.analisis.fecha_procesamiento,
         estado_general: datos.analisis.estado_general,
         puntaje_general: datos.analisis.puntaje_general,
@@ -101,6 +124,7 @@ export function SensorProvider({ children }: { children: ReactNode }) {
 
       setError(mensaje);
     } finally {
+      await actualizarCantidadPendiente();
       cargandoRef.current = false;
       setCargando(false);
     }
@@ -114,10 +138,21 @@ export function SensorProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function iniciar() {
       await cargarHistorial();
+      await sincronizar();
       await actualizarDatos();
     }
 
     iniciar();
+
+    const cancelarSuscripcion = NetInfo.addEventListener((estado) => {
+      if (estado.isConnected) {
+        sincronizar().catch((error) => {
+          console.warn("No fue posible sincronizar las lecturas:", error);
+        });
+      }
+    });
+
+    return cancelarSuscripcion;
 
     // La carga inicial debe ejecutarse solamente una vez.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -131,8 +166,10 @@ export function SensorProvider({ children }: { children: ReactNode }) {
         historial,
         cargando,
         error,
+        lecturasPendientes,
         actualizarDatos,
         limpiarHistorial,
+        sincronizar,
       }}
     >
       {children}

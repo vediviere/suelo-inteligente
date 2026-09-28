@@ -2,6 +2,11 @@ import { EstadoMedicion } from "../Models/analysis";
 
 export interface HistorialItem {
   analisis_id: string;
+  lectura_id: string;
+  dispositivo_id: string;
+  campo_id: string;
+  campo_nombre: string;
+  cultivo: string;
   fecha_procesamiento: string;
   estado_general: EstadoMedicion;
   puntaje_general: number;
@@ -15,6 +20,11 @@ export interface HistorialItem {
 export const historialMock: HistorialItem[] = [
   {
     analisis_id: "ana_003",
+    lectura_id: "lec_003",
+    dispositivo_id: "sensor_03",
+    campo_id: "campo_003",
+    campo_nombre: "Parcela sur",
+    cultivo: "Chile",
     fecha_procesamiento: "2026-09-23T10:30:00Z",
     estado_general: "advertencia",
     puntaje_general: 72,
@@ -26,6 +36,11 @@ export const historialMock: HistorialItem[] = [
   },
   {
     analisis_id: "ana_002",
+    lectura_id: "lec_002",
+    dispositivo_id: "sensor_02",
+    campo_id: "campo_002",
+    campo_nombre: "Invernadero principal",
+    cultivo: "Tomate",
     fecha_procesamiento: "2026-09-22T17:15:00Z",
     estado_general: "optimo",
     puntaje_general: 91,
@@ -37,6 +52,11 @@ export const historialMock: HistorialItem[] = [
   },
   {
     analisis_id: "ana_001",
+    lectura_id: "lec_001",
+    dispositivo_id: "sensor_01",
+    campo_id: "campo_001",
+    campo_nombre: "Parcela norte",
+    cultivo: "Maíz",
     fecha_procesamiento: "2026-09-21T09:45:00Z",
     estado_general: "critico",
     puntaje_general: 48,

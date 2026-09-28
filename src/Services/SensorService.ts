@@ -9,11 +9,67 @@ import {
 } from "../Models/analysis";
 import { LecturaSensor } from "../Models/sensor";
 import { obtenerJson } from "./HttpService";
+import {
+  eliminarLecturaPendiente,
+  guardarLecturaPendiente,
+  sincronizarPendientes,
+} from "./SyncService";
+
+interface RespuestaRegistro {
+  lectura: {
+    lecturaId: string;
+    dispositivoId: string;
+    cultivo: string;
+    ph: number;
+    conductividad: number;
+    humedad: number;
+    orp: number;
+    temperatura: number;
+    fechaRecepcion: string;
+    origen: string;
+    estado: EstadoMedicion;
+    procesado: boolean;
+  };
+  analisis: ResultadoAnalisis;
+}
 
 let indiceEscenario = 0;
 
 function esperar(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function registrarLecturaEnApi(
+  lectura: LecturaSensor,
+): Promise<ResultadoAnalisis> {
+  if (!API_CONFIG.datos.url) {
+    throw new Error("No se configuró la URL de la API.");
+  }
+
+  const respuesta = await obtenerJson<RespuestaRegistro>(
+    `${API_CONFIG.datos.url}${API_CONFIG.datos.registrarLectura}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        lecturaId: lectura.lectura_id,
+        dispositivoId: lectura.dispositivo_id,
+        campoId: lectura.campo_id,
+        campoNombre: lectura.campo_nombre,
+        cultivo: lectura.contexto_suelo.cultivo,
+        fechaCaptura: lectura.fecha_hora,
+        ph: lectura.lecturas.ph,
+        conductividad: lectura.lecturas.conductividad_ds_m,
+        humedad: lectura.lecturas.humedad_porcentaje,
+        orp: lectura.lecturas.orp_mv,
+        temperatura: lectura.lecturas.temperatura_c,
+      }),
+    },
+  );
+
+  return respuesta.analisis;
 }
 
 function evaluar(
@@ -99,29 +155,12 @@ export async function obtenerLecturaActual(): Promise<LecturaSensor> {
 export async function procesarLectura(
   lectura: LecturaSensor,
 ): Promise<ResultadoAnalisis> {
-  if (!API_CONFIG.usarMocks) {
-    if (!API_CONFIG.analisis.url) {
-      throw new Error("No se configuró la URL de la API de análisis.");
-    }
-
-    return obtenerJson<ResultadoAnalisis>(
-      `${API_CONFIG.analisis.url}${API_CONFIG.analisis.procesar}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(lectura),
-      },
-    );
-  }
-
-  await esperar(700);
+  await esperar(300);
 
   const resultados: ResultadoVariable[] = [
     crearResultado("ph", "pH", lectura.lecturas.ph, "pH", 6, 7.5, 5.5, 8),
     crearResultado(
-      "ce",
+      "conductividad",
       "Conductividad",
       lectura.lecturas.conductividad_ds_m,
       "dS/m",
@@ -213,12 +252,38 @@ export async function procesarLectura(
   };
 }
 
+export async function sincronizarLecturasPendientes() {
+  return sincronizarPendientes(async (lectura) => {
+    await registrarLecturaEnApi(lectura);
+  });
+}
+
 export async function obtenerDatosProcesados() {
   const lectura = await obtenerLecturaActual();
-  const analisis = await procesarLectura(lectura);
 
-  return {
-    lectura,
-    analisis,
-  };
+  await guardarLecturaPendiente(lectura);
+
+  try {
+    const analisis = await registrarLecturaEnApi(lectura);
+    await eliminarLecturaPendiente(lectura.lectura_id);
+
+    return {
+      lectura,
+      analisis,
+    };
+  } catch (error) {
+    const mensaje =
+      error instanceof Error
+        ? error.message
+        : "No fue posible obtener el análisis desde la API.";
+
+    console.warn("Lectura guardada para sincronización posterior:", mensaje);
+
+    const analisis = await procesarLectura(lectura);
+
+    return {
+      lectura,
+      analisis,
+    };
+  }
 }
