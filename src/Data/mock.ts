@@ -16,6 +16,7 @@ export const lecturaMock: LecturaSensor = {
     temperatura_c: 23.5,
   },
   contexto_suelo: {
+    zona: "Zacatlán",
     tipo_textura: "franco_limoso",
     materia_organica_porcentaje: 3.2,
     etapa_cultivo: "desarrollo_vegetativo",

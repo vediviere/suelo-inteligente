@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ResultadoAnalisis } from "../Models/analysis";
 import { LecturaSensor } from "../Models/sensor";
 
 const PENDIENTES_KEY = "@suelo_inteligente_lecturas_pendientes";
@@ -10,8 +11,13 @@ interface LecturaPendiente {
   ultimoError?: string;
 }
 
+export interface LecturaSincronizada {
+  lectura: LecturaSensor;
+  analisis: ResultadoAnalisis;
+}
+
 export interface ResultadoSincronizacion {
-  enviadas: number;
+  sincronizadas: LecturaSincronizada[];
   pendientes: number;
 }
 
@@ -69,15 +75,16 @@ export async function eliminarLecturaPendiente(lecturaId: string) {
 
 export async function contarLecturasPendientes() {
   const pendientes = await leerPendientes();
+
   return pendientes.length;
 }
 
 export async function sincronizarPendientes(
-  enviar: (lectura: LecturaSensor) => Promise<void>,
+  enviar: (lectura: LecturaSensor) => Promise<ResultadoAnalisis>,
 ): Promise<ResultadoSincronizacion> {
   if (sincronizando) {
     return {
-      enviadas: 0,
+      sincronizadas: [],
       pendientes: await contarLecturasPendientes(),
     };
   }
@@ -87,12 +94,16 @@ export async function sincronizarPendientes(
   try {
     const pendientes = await leerPendientes();
     const restantes: LecturaPendiente[] = [];
-    let enviadas = 0;
+    const sincronizadas: LecturaSincronizada[] = [];
 
     for (const item of pendientes) {
       try {
-        await enviar(item.lectura);
-        enviadas++;
+        const analisis = await enviar(item.lectura);
+
+        sincronizadas.push({
+          lectura: item.lectura,
+          analisis,
+        });
       } catch (error) {
         const mensaje =
           error instanceof Error
@@ -110,7 +121,7 @@ export async function sincronizarPendientes(
     await guardarPendientes(restantes);
 
     return {
-      enviadas,
+      sincronizadas,
       pendientes: restantes.length,
     };
   } finally {

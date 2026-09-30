@@ -16,6 +16,7 @@ export const escenariosMock: LecturaSensor[] = [
       temperatura_c: 23.5,
     },
     contexto_suelo: {
+      zona: "Zacatlán",
       tipo_textura: "franco_limoso",
       materia_organica_porcentaje: 3.2,
       etapa_cultivo: "desarrollo_vegetativo",
@@ -37,6 +38,7 @@ export const escenariosMock: LecturaSensor[] = [
       temperatura_c: 31,
     },
     contexto_suelo: {
+      zona: "Huauchinango",
       tipo_textura: "franco_arenoso",
       materia_organica_porcentaje: 2.1,
       etapa_cultivo: "floracion",
@@ -58,6 +60,7 @@ export const escenariosMock: LecturaSensor[] = [
       temperatura_c: 24,
     },
     contexto_suelo: {
+      zona: "Cuetzalan",
       tipo_textura: "arcilloso",
       materia_organica_porcentaje: 4.1,
       etapa_cultivo: "fructificacion",

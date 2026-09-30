@@ -2,12 +2,11 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, Text, View } from "react-native";
 import { AuthProvider, useAuth } from "../Context/AuthContext";
-import { SensorProvider } from "../Context/SensorContext";
 import { ThemeProvider, useTheme } from "../Context/ThemeContext";
 
 function RootNavigator() {
   const { sesion, cargandoSesion } = useAuth();
-  const { colores } = useTheme();
+  const { colores, oscuro } = useTheme();
 
   if (cargandoSesion) {
     return (
@@ -20,6 +19,7 @@ function RootNavigator() {
         }}
       >
         <ActivityIndicator size="large" color={colores.principal} />
+
         <Text
           style={{
             marginTop: 12,
@@ -34,31 +34,27 @@ function RootNavigator() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!sesion}>
-        <Stack.Screen name="login" />
-      </Stack.Protected>
+    <>
+      <StatusBar style={oscuro ? "light" : "dark"} />
 
-      <Stack.Protected guard={!!sesion}>
-        <Stack.Screen name="(Tabs)" />
-      </Stack.Protected>
-    </Stack>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={!sesion}>
+          <Stack.Screen name="login" />
+        </Stack.Protected>
+
+        <Stack.Protected guard={!!sesion}>
+          <Stack.Screen name="(Tabs)" />
+        </Stack.Protected>
+      </Stack>
+    </>
   );
 }
 
 function AppContent() {
-  const { oscuro } = useTheme();
-
   return (
-    <>
-      <StatusBar style={oscuro ? "light" : "dark"} />
-
-      <AuthProvider>
-        <SensorProvider>
-          <RootNavigator />
-        </SensorProvider>
-      </AuthProvider>
-    </>
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }
 

@@ -1,8 +1,10 @@
 export type EstadoMedicion = "optimo" | "advertencia" | "critico" | "sin_datos";
+export type CondicionMedicion = "optimo" | "bajo" | "alto";
 export type Prioridad = "baja" | "media" | "alta";
 
 export interface Rango {
   min: number;
+  optimo?: number;
   max: number;
 }
 
@@ -12,6 +14,8 @@ export interface ResultadoVariable {
   valor: number;
   unidad: string;
   estado: EstadoMedicion;
+  condicion?: CondicionMedicion;
+  diferencia_para_rango?: number;
   rango_recomendado: Rango;
   mensaje: string;
 }
@@ -37,4 +41,15 @@ export interface ResultadoAnalisis {
   resultados: ResultadoVariable[];
   alertas: Alerta[];
   recomendaciones: Recomendacion[];
+}
+
+export interface InterpretacionIa {
+  analisis_id: string;
+  resumen: string;
+  prioridad: Prioridad;
+  variable_prioritaria: string;
+  acciones: string[];
+  advertencia: string;
+  generado_por: string;
+  fecha_generacion: string;
 }

@@ -1,7 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
+import type { ImageSourcePropType } from "react-native";
 import {
   ActivityIndicator,
+  Image,
   ImageBackground,
   Pressable,
   RefreshControl,
@@ -11,7 +14,13 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Path } from "react-native-svg";
+import Svg, {
+  Circle,
+  Defs,
+  Mask,
+  Path,
+  Image as SvgImage,
+} from "react-native-svg";
 import { API_CONFIG } from "../../Config/api";
 import { useSensor } from "../../Context/SensorContext";
 import { useTheme } from "../../Context/ThemeContext";
@@ -21,13 +30,21 @@ import { obtenerClimaActual } from "../../Services/WeatherService";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
+const iconos = {
+  ph: require("../../../assets/iconos/ph.png"),
+  conductividad: require("../../../assets/iconos/conductividad.png"),
+  humedad: require("../../../assets/iconos/humedad.png"),
+  orp: require("../../../assets/iconos/orp.png"),
+  temperatura: require("../../../assets/iconos/temperatura.png"),
+  suelo: require("../../../assets/iconos/suelo.png"),
+  cultivo: require("../../../assets/iconos/cultivo.png"),
+};
+
 interface MeasurementItemProps {
   title: string;
   value: string;
   estado: EstadoMedicion;
-  icon: IconName;
-  color: string;
-  backgroundColor: string;
+  icon: ImageSourcePropType;
   borderRight?: boolean;
   borderBottom?: boolean;
 }
@@ -42,8 +59,8 @@ function obtenerEstado(estado: EstadoMedicion, oscuro: boolean) {
     case "optimo":
       return {
         texto: "Adecuado",
-        color: oscuro ? "#76D27F" : "#2E7D32",
-        fondo: oscuro ? "#243B29" : "#E8F5E9",
+        color: oscuro ? "#6ED47A" : "#2E7D32",
+        fondo: oscuro ? "#243B29" : "#DCEEDE",
       };
     case "advertencia":
       return {
@@ -60,8 +77,8 @@ function obtenerEstado(estado: EstadoMedicion, oscuro: boolean) {
     default:
       return {
         texto: "Sin datos",
-        color: oscuro ? "#B9B1C2" : "#616161",
-        fondo: oscuro ? "#332D3B" : "#EEEEEE",
+        color: oscuro ? "#A7B6AA" : "#616161",
+        fondo: oscuro ? "#202C22" : "#EEEEEE",
       };
   }
 }
@@ -72,45 +89,83 @@ function formatearTexto(valor: string) {
     .replace(/\b\w/g, (letra) => letra.toUpperCase());
 }
 
-function ProgressCircle({ score, color }: { score: number; color: string }) {
+function ProgressCircle({
+  score,
+  estado,
+}: {
+  score: number;
+  estado: EstadoMedicion;
+}) {
   const { oscuro, colores } = useTheme();
   const themeStyles = crearTema(colores, oscuro);
-  const size = 126;
-  const strokeWidth = 12;
+
+  const size = 136;
+  const imageSize = 126;
+  const imagePosition = (size - imageSize) / 2;
+
   const center = size / 2;
-  const radius = (size - strokeWidth) / 2;
+  const radius = 53.5;
+  const strokeWidth = 6;
   const circumference = 2 * Math.PI * radius;
+
   const progress = Math.max(0, Math.min(score, 100));
   const offset = circumference - (progress / 100) * circumference;
 
-  return (
-    <View style={styles.progressContainer}>
-      <Svg width={size} height={size}>
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke={colores.borde}
-          strokeWidth={strokeWidth}
-        />
+  const imagen =
+    estado === "critico"
+      ? require("../../../assets/images/indice-critico.png")
+      : estado === "advertencia"
+        ? require("../../../assets/images/indice-advertencia.png")
+        : require("../../../assets/images/indice-optimo.png");
 
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={offset}
-          transform={`rotate(-90 ${center} ${center})`}
+  return (
+    <View style={[styles.progressContainer, { width: size, height: size }]}>
+      <Image
+        source={imagen}
+        style={[
+          styles.progressImage,
+          {
+            width: imageSize,
+            height: imageSize,
+            tintColor: oscuro ? "#050807" : "#4D5650",
+            opacity: oscuro ? 0.55 : 0.3,
+          },
+        ]}
+      />
+
+      <Svg width={size} height={size} style={styles.progressIndicator}>
+        <Defs>
+          <Mask id="progressMask">
+            <Circle
+              cx={center}
+              cy={center}
+              r={radius}
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={`${circumference} ${circumference}`}
+              strokeDashoffset={offset}
+              rotation="-90"
+              origin={`${center}, ${center}`}
+            />
+          </Mask>
+        </Defs>
+
+        <SvgImage
+          href={imagen}
+          x={imagePosition}
+          y={imagePosition}
+          width={imageSize}
+          height={imageSize}
+          preserveAspectRatio="xMidYMid meet"
+          mask="url(#progressMask)"
         />
       </Svg>
 
       <View style={styles.progressContent}>
         <Text style={[styles.progressScore, themeStyles.text]}>{score}</Text>
+
         <Text style={[styles.progressLabel, themeStyles.secondaryText]}>
           / 100 pts
         </Text>
@@ -136,8 +191,6 @@ function MeasurementItem({
   value,
   estado,
   icon,
-  color,
-  backgroundColor,
   borderRight,
   borderBottom,
 }: MeasurementItemProps) {
@@ -155,15 +208,8 @@ function MeasurementItem({
         borderBottom && themeStyles.measurementBorderBottom,
       ]}
     >
-      <View
-        style={[
-          styles.measurementIcon,
-          {
-            backgroundColor: oscuro ? `${color}25` : backgroundColor,
-          },
-        ]}
-      >
-        <Ionicons name={icon} size={24} color={color} />
+      <View style={styles.measurementIcon}>
+        <Image source={icon} style={styles.measurementIconImage} />
       </View>
 
       <View style={styles.measurementInfo}>
@@ -193,6 +239,14 @@ export default function HomeScreen() {
     lecturasPendientes,
     actualizarDatos,
     sincronizar,
+    zonas,
+    cultivos,
+    zonaSeleccionada,
+    cultivoSeleccionado,
+    cargandoCatalogo,
+    seleccionarZona,
+    seleccionarCultivo,
+    estadoConexion,
   } = useSensor();
 
   const [clima, setClima] = useState<ClimaActual | null>(null);
@@ -259,7 +313,7 @@ export default function HomeScreen() {
     });
   }
 
-  if (cargando && !lectura) {
+  if ((cargando || cargandoCatalogo) && !lectura) {
     return (
       <View style={[styles.center, themeStyles.background]}>
         <ActivityIndicator size="large" color={colores.principal} />
@@ -292,6 +346,22 @@ export default function HomeScreen() {
       </View>
     );
   }
+
+  const conexionVisual =
+    estadoConexion === "conectado"
+      ? {
+          texto: "Conectado",
+          color: oscuro ? "#6ED47A" : "#2E7D32",
+        }
+      : estadoConexion === "verificando"
+        ? {
+            texto: "Verificando",
+            color: oscuro ? "#FFCA75" : "#B26A00",
+          }
+        : {
+            texto: "Sin conexión",
+            color: oscuro ? "#FF8585" : "#C62828",
+          };
 
   const estadoGeneral = obtenerEstado(analisis.estado_general, oscuro);
   //const recomendacion = analisis.recomendaciones[0];
@@ -333,7 +403,7 @@ export default function HomeScreen() {
             styles.headerOverlay,
             {
               backgroundColor: oscuro
-                ? "rgba(10, 8, 18, 0.08)"
+                ? "rgba(16, 23, 18, 0.12)"
                 : "rgba(255, 255, 255, 0.22)",
             },
           ]}
@@ -345,18 +415,18 @@ export default function HomeScreen() {
               style={[
                 styles.title,
                 {
-                  color: oscuro ? "#FFFFFF" : "#173C25",
+                  color: oscuro ? "#FFFFFF" : "#203126",
                 },
               ]}
             >
-              Suelo Inteligente
+              TLALCANI
             </Text>
 
             <Text
               style={[
                 styles.subtitle,
                 {
-                  color: oscuro ? "#D8D1E0" : "#53645A",
+                  color: oscuro ? "#A7B6AA" : "#657269",
                 },
               ]}
             >
@@ -369,9 +439,7 @@ export default function HomeScreen() {
               style={[
                 styles.simulationBadge,
                 {
-                  backgroundColor: oscuro
-                    ? "rgba(35, 30, 44, 0.88)"
-                    : "#E8F5E9",
+                  backgroundColor: oscuro ? "rgba(24, 34, 26, 0.9)" : "#DCEEDE",
                   borderWidth: oscuro ? 1 : 0,
                   borderColor: oscuro ? colores.borde : "transparent",
                 },
@@ -381,11 +449,7 @@ export default function HomeScreen() {
                 style={[
                   styles.simulationDot,
                   {
-                    backgroundColor: API_CONFIG.usarMocks
-                      ? oscuro
-                        ? "#76D27F"
-                        : "#2E7D32"
-                      : "#3478F6",
+                    backgroundColor: conexionVisual.color,
                   },
                 ]}
               />
@@ -394,11 +458,13 @@ export default function HomeScreen() {
                 style={[
                   styles.simulationText,
                   {
-                    color: oscuro ? "#8FDF97" : "#2E7D32",
+                    color: conexionVisual.color,
                   },
                 ]}
               >
-                {API_CONFIG.usarMocks ? "Simulado" : "Conectado"}
+                {API_CONFIG.usarMocks ? "Simulado" : "Sensor"}
+                {" · "}
+                {conexionVisual.texto}
               </Text>
             </View>
 
@@ -407,9 +473,9 @@ export default function HomeScreen() {
                 styles.themeButton,
                 {
                   backgroundColor: oscuro
-                    ? "rgba(35, 30, 44, 0.88)"
-                    : "rgba(255, 255, 255, 0.88)",
-                  borderColor: oscuro ? colores.borde : "#D7DDD8",
+                    ? "rgba(24, 34, 26, 0.9)"
+                    : "rgba(248, 250, 248, 0.92)",
+                  borderColor: oscuro ? colores.borde : "#C8D5CA",
                 },
                 pressed && styles.themeButtonPressed,
               ]}
@@ -422,7 +488,7 @@ export default function HomeScreen() {
               <Ionicons
                 name={oscuro ? "moon" : "sunny"}
                 size={21}
-                color={oscuro ? "#D6B8FF" : "#E59A18"}
+                color={oscuro ? "#9EDB63" : "#E59A18"}
               />
             </Pressable>
             {lecturasPendientes > 0 && (
@@ -431,9 +497,9 @@ export default function HomeScreen() {
                   styles.syncButton,
                   {
                     backgroundColor: oscuro
-                      ? "rgba(35, 30, 44, 0.88)"
-                      : "rgba(255, 255, 255, 0.88)",
-                    borderColor: oscuro ? colores.borde : "#D7DDD8",
+                      ? "rgba(24, 34, 26, 0.9)"
+                      : "rgba(248, 250, 248, 0.92)",
+                    borderColor: oscuro ? colores.borde : "#C8D5CA",
                   },
                   pressed && styles.themeButtonPressed,
                 ]}
@@ -488,6 +554,84 @@ export default function HomeScreen() {
         </View>
       )}
 
+      <View style={[styles.selectionCard, themeStyles.card]}>
+        <View style={styles.selectionHeader}>
+          <Ionicons
+            name="location-outline"
+            size={22}
+            color={colores.principal}
+          />
+
+          <View style={styles.selectionHeaderText}>
+            <Text style={[styles.selectionTitle, themeStyles.text]}>
+              Configuración del cultivo
+            </Text>
+
+            <Text style={[styles.selectionSubtitle, themeStyles.secondaryText]}>
+              Selecciona tu zona y lo que deseas sembrar
+            </Text>
+          </View>
+        </View>
+
+        <Text style={[styles.selectionLabel, themeStyles.secondaryText]}>
+          Zona
+        </Text>
+
+        <View
+          style={[
+            styles.pickerContainer,
+            {
+              borderColor: colores.borde,
+              backgroundColor: colores.fondo,
+            },
+          ]}
+        >
+          <Picker
+            selectedValue={zonaSeleccionada}
+            enabled={!cargandoCatalogo}
+            dropdownIconColor={colores.texto}
+            style={[styles.picker, { color: colores.texto }]}
+            onValueChange={(valor) => {
+              void seleccionarZona(valor);
+            }}
+          >
+            {zonas.map((zona) => (
+              <Picker.Item key={zona} label={zona} value={zona} />
+            ))}
+          </Picker>
+        </View>
+
+        <Text style={[styles.selectionLabel, themeStyles.secondaryText]}>
+          Cultivo
+        </Text>
+
+        <View
+          style={[
+            styles.pickerContainer,
+            {
+              borderColor: colores.borde,
+              backgroundColor: colores.fondo,
+            },
+          ]}
+        >
+          <Picker
+            selectedValue={cultivoSeleccionado}
+            enabled={!cargandoCatalogo && cultivos.length > 0}
+            dropdownIconColor={colores.texto}
+            style={[styles.picker, { color: colores.texto }]}
+            onValueChange={seleccionarCultivo}
+          >
+            {cultivos.map((cultivo) => (
+              <Picker.Item
+                key={cultivo.id}
+                label={cultivo.nombre}
+                value={cultivo.nombre}
+              />
+            ))}
+          </Picker>
+        </View>
+      </View>
+
       <View style={[styles.climateCard, themeStyles.background]}>
         <View style={styles.climateTitleContainer}>
           <Text style={[styles.climateTitle, themeStyles.text]}>
@@ -540,7 +684,7 @@ export default function HomeScreen() {
         <View style={styles.indexSide}>
           <ProgressCircle
             score={analisis.puntaje_general}
-            color={estadoGeneral.color}
+            estado={analisis.estado_general}
           />
         </View>
 
@@ -559,7 +703,7 @@ export default function HomeScreen() {
               { backgroundColor: estadoGeneral.fondo },
             ]}
           >
-            <Ionicons name="leaf" size={19} color={estadoGeneral.color} />
+            <Image source={iconos.suelo} style={styles.statusBadgeIcon} />
 
             <Text style={[styles.statusTitle, { color: estadoGeneral.color }]}>
               {estadoGeneral.texto}
@@ -588,9 +732,7 @@ export default function HomeScreen() {
             title="pH"
             value={lectura.lecturas.ph.toFixed(1)}
             estado={obtenerEstadoVariable("ph")}
-            icon="water-outline"
-            color="#2E7D32"
-            backgroundColor="#E8F5E9"
+            icon={iconos.ph}
             borderRight
             borderBottom
           />
@@ -599,9 +741,7 @@ export default function HomeScreen() {
             title="Conductividad"
             value={`${lectura.lecturas.conductividad_ds_m.toFixed(2)} dS/m`}
             estado={obtenerEstadoVariable("ce", "conductividad")}
-            icon="pulse-outline"
-            color="#3478F6"
-            backgroundColor="#EAF2FF"
+            icon={iconos.conductividad}
             borderBottom
           />
 
@@ -609,9 +749,7 @@ export default function HomeScreen() {
             title="Humedad"
             value={`${lectura.lecturas.humedad_porcentaje.toFixed(0)} %`}
             estado={obtenerEstadoVariable("humedad")}
-            icon="water"
-            color="#3478F6"
-            backgroundColor="#EAF2FF"
+            icon={iconos.humedad}
             borderRight
             borderBottom
           />
@@ -620,9 +758,7 @@ export default function HomeScreen() {
             title="ORP"
             value={`${lectura.lecturas.orp_mv.toFixed(0)} mV`}
             estado={obtenerEstadoVariable("orp")}
-            icon="pulse-outline"
-            color="#7B4BC4"
-            backgroundColor="#F0E9FA"
+            icon={iconos.orp}
             borderBottom
           />
 
@@ -630,9 +766,7 @@ export default function HomeScreen() {
             title="Temperatura"
             value={`${lectura.lecturas.temperatura_c.toFixed(1)} °C`}
             estado={obtenerEstadoVariable("temperatura")}
-            icon="thermometer-outline"
-            color="#E85D3F"
-            backgroundColor="#FDEDEA"
+            icon={iconos.temperatura}
             borderRight
           />
         </View>
@@ -645,7 +779,7 @@ export default function HomeScreen() {
             { backgroundColor: colores.principalClaro },
           ]}
         >
-          <Ionicons name="leaf" size={25} color={colores.principal} />
+          <Image source={iconos.cultivo} style={styles.contextIconImage} />
         </View>
 
         <Text
@@ -728,7 +862,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F1ECFA",
+    backgroundColor: "#EDF2EE",
   },
   content: {
     paddingHorizontal: 20,
@@ -737,7 +871,7 @@ const styles = StyleSheet.create({
   center: {
     flex: 1,
     padding: 25,
-    backgroundColor: "#F1ECFA",
+    backgroundColor: "#EDF2EE",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -791,19 +925,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#173C25",
+    color: "#203126",
   },
   subtitle: {
     marginTop: 4,
     fontSize: 16,
-    color: "#53645A",
+    color: "#657269",
   },
   simulationBadge: {
     //marginLeft: 10,
     paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 18,
-    backgroundColor: "#E8F5E9",
+    backgroundColor: "#DCEEDE",
     flexDirection: "row",
     alignItems: "center",
   },
@@ -838,7 +972,7 @@ const styles = StyleSheet.create({
     marginHorizontal: -20,
     marginTop: -8,
     marginBottom: 2,
-    backgroundColor: "#F1ECFA",
+    backgroundColor: "#EDF2EE",
     flexDirection: "row",
     alignItems: "center",
   },
@@ -849,7 +983,7 @@ const styles = StyleSheet.create({
   climateTitle: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#203527",
+    color: "#203126",
   },
   climateValues: {
     flex: 1,
@@ -866,12 +1000,12 @@ const styles = StyleSheet.create({
   climateValue: {
     fontSize: 13,
     fontWeight: "bold",
-    color: "#203527",
+    color: "#203126",
   },
   climateDivider: {
     width: 1,
     height: 28,
-    backgroundColor: "#E7E1F0",
+    backgroundColor: "#C8D5CA",
   },
   climateErrorContainer: {
     flex: 1,
@@ -903,20 +1037,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   progressContainer: {
-    width: 126,
-    height: 126,
+    position: "relative",
     alignItems: "center",
     justifyContent: "center",
   },
+
+  progressImage: {
+    position: "absolute",
+    resizeMode: "contain",
+  },
+
+  progressIndicator: {
+    position: "absolute",
+  },
+
   progressContent: {
     position: "absolute",
     alignItems: "center",
+    justifyContent: "center",
   },
+
   progressScore: {
     fontSize: 40,
     fontWeight: "bold",
     color: "#203527",
   },
+
   progressLabel: {
     marginTop: -3,
     fontSize: 11,
@@ -925,7 +1071,7 @@ const styles = StyleSheet.create({
   statusDivider: {
     width: 1,
     height: 125,
-    backgroundColor: "#E7E1F0",
+    backgroundColor: "#C8D5CA",
     marginLeft: 8,
   },
   statusDetails: {
@@ -935,7 +1081,7 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 19,
     fontWeight: "bold",
-    color: "#203527",
+    color: "#203126",
   },
   statusBadge: {
     alignSelf: "flex-start",
@@ -960,7 +1106,7 @@ const styles = StyleSheet.create({
   statusDate: {
     flex: 1,
     fontSize: 11,
-    color: "#6F7180",
+    color: "#657269",
   },
   measurementsCard: {
     marginBottom: 15,
@@ -979,7 +1125,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     fontSize: 21,
     fontWeight: "bold",
-    color: "#203527",
+    color: "#203126",
   },
   measurementGrid: {
     flexDirection: "row",
@@ -994,11 +1140,11 @@ const styles = StyleSheet.create({
   },
   measurementBorderRight: {
     borderRightWidth: 1,
-    borderRightColor: "#E7E1F0",
+    borderRightColor: "#C8D5CA",
   },
   measurementBorderBottom: {
     borderBottomWidth: 1,
-    borderBottomColor: "#E7E1F0",
+    borderBottomColor: "#C8D5CA",
   },
   measurementIcon: {
     width: 42,
@@ -1008,18 +1154,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  measurementIconImage: {
+    width: 40,
+    height: 40,
+    resizeMode: "contain",
+  },
+  statusBadgeIcon: {
+    width: 23,
+    height: 23,
+    resizeMode: "contain",
+  },
+  contextIconImage: {
+    width: 38,
+    height: 38,
+    resizeMode: "contain",
+  },
   measurementInfo: {
     flex: 1,
   },
   measurementTitle: {
     fontSize: 12,
-    color: "#6F7180",
+    color: "#657269",
   },
   measurementValue: {
     marginTop: 3,
     fontSize: 17,
     fontWeight: "bold",
-    color: "#203527",
+    color: "#203126",
   },
   measurementStatus: {
     marginTop: 4,
@@ -1045,7 +1206,7 @@ const styles = StyleSheet.create({
     height: 43,
     marginRight: 12,
     borderRadius: 22,
-    backgroundColor: "#E8F5E9",
+    backgroundColor: "#DCEEDE",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1054,14 +1215,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "600",
-    color: "#203527",
+    color: "#203126",
   },
   recommendationBar: {
     minHeight: 76,
     padding: 14,
     marginBottom: 14,
     borderRadius: 18,
-    backgroundColor: "#E8F5E9",
+    backgroundColor: "#DCEEDE",
     flexDirection: "row",
     alignItems: "center",
   },
@@ -1080,13 +1241,13 @@ const styles = StyleSheet.create({
   recommendationTitle: {
     fontSize: 15,
     fontWeight: "bold",
-    color: "#1E4029",
+    color: "#203126",
   },
   recommendationText: {
     marginTop: 3,
     fontSize: 12,
     lineHeight: 17,
-    color: "#415447",
+    color: "#657269",
   },
   refreshButton: {
     minHeight: 50,
@@ -1146,6 +1307,51 @@ const styles = StyleSheet.create({
   syncButtonText: {
     fontSize: 13,
     fontWeight: "bold",
+  },
+
+  selectionCard: {
+    padding: 16,
+    marginBottom: 15,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    elevation: 2,
+    shadowColor: "#000000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  selectionHeader: {
+    marginBottom: 14,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  selectionHeaderText: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  selectionTitle: {
+    fontSize: 17,
+    fontWeight: "bold",
+  },
+  selectionSubtitle: {
+    marginTop: 2,
+    fontSize: 12,
+  },
+  selectionLabel: {
+    marginTop: 8,
+    marginBottom: 5,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  pickerContainer: {
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 13,
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  picker: {
+    height: 50,
   },
 });
 

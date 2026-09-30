@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -55,11 +56,13 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.logo}>
-          <Ionicons name="leaf-outline" size={55} color="#FFFFFF" />
-        </View>
+        <Image
+          source={require("../../assets/images/tlalcani-logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
 
-        <Text style={styles.title}>Suelo Inteligente</Text>
+        <Text style={styles.title}>TLALCANI</Text>
 
         <Text style={styles.subtitle}>
           Monitoreo y análisis del estado del suelo
@@ -189,18 +192,9 @@ function crearEstilos(
       paddingBottom: 40,
     },
     logo: {
-      width: 96,
-      height: 96,
+      width: 155,
+      height: 105,
       alignSelf: "center",
-      borderRadius: 30,
-      backgroundColor: oscuro ? "#347C3D" : colores.principal,
-      alignItems: "center",
-      justifyContent: "center",
-      elevation: oscuro ? 0 : 4,
-      shadowColor: oscuro ? "#000000" : "#1E4029",
-      shadowOpacity: oscuro ? 0 : 0.22,
-      shadowRadius: 9,
-      shadowOffset: { width: 0, height: 4 },
     },
     title: {
       marginTop: 20,

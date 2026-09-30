@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,32 +17,27 @@ const variables = [
   {
     nombre: "pH",
     descripcion: "Indica el nivel de acidez o alcalinidad del suelo.",
-    icono: "water-outline" as const,
-    color: "#3478F6",
+    imagen: require("../../../assets/iconos/ph.png"),
   },
   {
     nombre: "Conductividad",
     descripcion: "Estima la concentración de sales presentes en el suelo.",
-    icono: "flash-outline" as const,
-    color: "#F59E0B",
+    imagen: require("../../../assets/iconos/conductividad.png"),
   },
   {
     nombre: "Humedad",
     descripcion: "Representa el porcentaje de agua disponible en el suelo.",
-    icono: "water-outline" as const,
-    color: "#00ACC1",
+    imagen: require("../../../assets/iconos/humedad.png"),
   },
   {
     nombre: "ORP",
     descripcion: "Mide la capacidad de oxidación o reducción del suelo.",
-    icono: "pulse-outline" as const,
-    color: "#8854D0",
+    imagen: require("../../../assets/iconos/orp.png"),
   },
   {
     nombre: "Temperatura",
     descripcion: "Registra la temperatura actual alrededor del sensor.",
-    icono: "thermometer-outline" as const,
-    color: "#E85D3F",
+    imagen: require("../../../assets/iconos/temperatura.png"),
   },
 ];
 
@@ -72,14 +68,25 @@ export default function InfoScreen() {
         Conoce las variables analizadas por la aplicación
       </Text>
 
-      <View style={styles.aboutCard}>
+      <View
+        style={[
+          styles.aboutCard,
+          {
+            backgroundColor: oscuro ? "#163A25" : "#2E7D32",
+          },
+        ]}
+      >
         <View style={styles.logo}>
-          <Ionicons name="leaf-outline" size={34} color="#FFFFFF" />
+          <Image
+            source={require("../../../assets/images/tlalcani-logo.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
 
         <View style={styles.aboutContent}>
-          <Text style={styles.appName}>Suelo Inteligente</Text>
-          <Text style={styles.version}>Versión de prototipo 1.0</Text>
+          <Text style={styles.appName}>TLALCANI</Text>
+          <Text style={styles.version}>Monitoreo inteligente del suelo</Text>
         </View>
       </View>
 
@@ -120,15 +127,8 @@ export default function InfoScreen() {
 
       {variables.map((variable) => (
         <View key={variable.nombre} style={styles.variableCard}>
-          <View
-            style={[
-              styles.iconContainer,
-              {
-                backgroundColor: `${variable.color}${oscuro ? "25" : "15"}`,
-              },
-            ]}
-          >
-            <Ionicons name={variable.icono} size={27} color={variable.color} />
+          <View style={styles.iconContainer}>
+            <Image source={variable.imagen} style={styles.variableIcon} />
           </View>
 
           <View style={styles.variableContent}>
@@ -205,18 +205,23 @@ function crearEstilos(colores: {
       padding: 20,
       marginBottom: 12,
       borderRadius: 18,
-      backgroundColor: colores.principal,
       flexDirection: "row",
       alignItems: "center",
     },
     logo: {
-      width: 62,
-      height: 62,
+      width: 64,
+      height: 64,
       marginRight: 15,
-      borderRadius: 31,
-      backgroundColor: "rgba(255,255,255,0.18)",
+      borderWidth: 1,
+      borderColor: "rgba(255,255,255,0.32)",
+      borderRadius: 32,
+      backgroundColor: "rgba(255,255,255,0.12)",
       alignItems: "center",
       justifyContent: "center",
+    },
+    logoImage: {
+      width: 54,
+      height: 54,
     },
     aboutContent: {
       flex: 1,
@@ -286,6 +291,11 @@ function crearEstilos(colores: {
       borderRadius: 15,
       alignItems: "center",
       justifyContent: "center",
+    },
+    variableIcon: {
+      width: 48,
+      height: 48,
+      resizeMode: "contain",
     },
     variableContent: {
       flex: 1,

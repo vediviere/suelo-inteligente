@@ -1,5 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   Share,
@@ -10,7 +13,17 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSensor } from "../../Context/SensorContext";
 import { useTheme } from "../../Context/ThemeContext";
-import { EstadoMedicion } from "../../Models/analysis";
+import type { EstadoMedicion, InterpretacionIa } from "../../Models/analysis";
+import { obtenerInterpretacionIa } from "../../Services/SensorService";
+
+const iconosVariables: Record<string, number> = {
+  ph: require("../../../assets/iconos/ph.png"),
+  ce: require("../../../assets/iconos/conductividad.png"),
+  conductividad: require("../../../assets/iconos/conductividad.png"),
+  humedad: require("../../../assets/iconos/humedad.png"),
+  orp: require("../../../assets/iconos/orp.png"),
+  temperatura: require("../../../assets/iconos/temperatura.png"),
+};
 
 function obtenerColor(estado: EstadoMedicion, oscuro: boolean) {
   switch (estado) {
@@ -43,7 +56,53 @@ export default function AnalysisScreen() {
   const { oscuro, colores } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = crearEstilos(colores, oscuro);
+  const [interpretacion, setInterpretacion] = useState<InterpretacionIa | null>(
+    null,
+  );
+  const [cargandoIa, setCargandoIa] = useState(false);
+  const [errorIa, setErrorIa] = useState<string | null>(null);
 
+  const analisisId = analisis?.analisis_id;
+
+  useEffect(() => {
+    if (!analisisId) {
+      return;
+    }
+
+    let activo = true;
+
+    async function cargarInterpretacion() {
+      try {
+        setCargandoIa(true);
+        setErrorIa(null);
+
+        const resultado = await obtenerInterpretacionIa(analisisId!);
+
+        if (activo) {
+          setInterpretacion(resultado);
+        }
+      } catch (error) {
+        if (activo) {
+          setInterpretacion(null);
+          setErrorIa(
+            error instanceof Error
+              ? error.message
+              : "No fue posible obtener la interpretación inteligente.",
+          );
+        }
+      } finally {
+        if (activo) {
+          setCargandoIa(false);
+        }
+      }
+    }
+
+    void cargarInterpretacion();
+
+    return () => {
+      activo = false;
+    };
+  }, [analisisId]);
   if (cargando && !analisis) {
     return (
       <View style={styles.center}>
@@ -82,9 +141,9 @@ export default function AnalysisScreen() {
       .join("\n");
 
     await Share.share({
-      title: "Análisis del suelo",
+      title: "Análisis TLALCANI",
       message:
-        `Suelo Inteligente\n\n` +
+        `TLALCANI\n\n` +
         `Estado general: ${obtenerTextoEstado(analisis.estado_general)}\n` +
         `Puntaje: ${analisis.puntaje_general}/100\n\n` +
         `Mediciones:\n${mediciones}\n\n` +
@@ -129,6 +188,75 @@ export default function AnalysisScreen() {
         </View>
       </View>
 
+      <Text style={styles.sectionTitle}>Interpretación inteligente</Text>
+
+      <View style={styles.iaCard}>
+        <View style={styles.iaHeader}>
+          <View style={styles.iaIcon}>
+            <Ionicons name="sparkles" size={24} color={colores.principal} />
+          </View>
+
+          <View style={styles.iaHeaderText}>
+            <Text style={styles.iaTitle}>Análisis generado por IA</Text>
+            <Text style={styles.iaProvider}>
+              {interpretacion?.generado_por ?? "TLALCANI"}
+            </Text>
+          </View>
+        </View>
+
+        {cargandoIa ? (
+          <View style={styles.iaLoading}>
+            <ActivityIndicator color={colores.principal} />
+
+            <Text style={styles.iaLoadingText}>
+              Interpretando resultados...
+            </Text>
+          </View>
+        ) : errorIa ? (
+          <Text style={styles.iaError}>{errorIa}</Text>
+        ) : interpretacion ? (
+          <>
+            <Text style={styles.iaSummary}>{interpretacion.resumen}</Text>
+
+            <View style={styles.iaPriority}>
+              <Text style={styles.iaPriorityLabel}>Variable prioritaria</Text>
+
+              <Text style={styles.iaPriorityValue}>
+                {interpretacion.variable_prioritaria}
+              </Text>
+            </View>
+
+            <Text style={styles.iaActionsTitle}>Acciones sugeridas</Text>
+
+            {interpretacion.acciones.map((accion, index) => (
+              <View key={`${accion}-${index}`} style={styles.iaAction}>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={19}
+                  color={colores.principal}
+                />
+
+                <Text style={styles.iaActionText}>{accion}</Text>
+              </View>
+            ))}
+
+            {interpretacion.advertencia && (
+              <View style={styles.iaWarning}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={20}
+                  color="#B26A00"
+                />
+
+                <Text style={styles.iaWarningText}>
+                  {interpretacion.advertencia}
+                </Text>
+              </View>
+            )}
+          </>
+        ) : null}
+      </View>
+
       <Text style={styles.sectionTitle}>Resultados</Text>
 
       {analisis.resultados.map((resultado) => {
@@ -138,12 +266,22 @@ export default function AnalysisScreen() {
           <View key={resultado.variable} style={styles.resultCard}>
             <View style={styles.resultHeader}>
               <View style={styles.resultInformation}>
-                <Text style={styles.resultName}>{resultado.nombre}</Text>
+                <Image
+                  source={
+                    iconosVariables[resultado.variable.toLowerCase()] ??
+                    require("../../../assets/iconos/suelo.png")
+                  }
+                  style={styles.resultIcon}
+                />
 
-                <Text style={styles.range}>
-                  Recomendado: {resultado.rango_recomendado.min} a{" "}
-                  {resultado.rango_recomendado.max} {resultado.unidad}
-                </Text>
+                <View style={styles.resultText}>
+                  <Text style={styles.resultName}>{resultado.nombre}</Text>
+
+                  <Text style={styles.range}>
+                    Recomendado: {resultado.rango_recomendado.min} a{" "}
+                    {resultado.rango_recomendado.max} {resultado.unidad}
+                  </Text>
+                </View>
               </View>
 
               <View
@@ -325,6 +463,91 @@ function crearEstilos(
       fontSize: 11,
       color: colores.textoSecundario,
     },
+    iaCard: {
+      ...card,
+      padding: 18,
+      marginBottom: 25,
+      borderRadius: 18,
+      backgroundColor: colores.tarjeta,
+    },
+    iaHeader: {
+      marginBottom: 13,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    iaTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: colores.texto,
+    },
+    iaPriority: {
+      marginTop: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 12,
+      backgroundColor: colores.principalClaro,
+    },
+    iaLoading: {
+      paddingVertical: 20,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+    },
+    iaLoadingText: {
+      fontSize: 13,
+      color: colores.textoSecundario,
+    },
+    iaSummary: {
+      fontSize: 14,
+      lineHeight: 21,
+      color: colores.texto,
+    },
+    iaActionsTitle: {
+      marginTop: 16,
+      marginBottom: 8,
+      fontSize: 14,
+      fontWeight: "bold",
+      color: colores.texto,
+    },
+    iaAction: {
+      marginBottom: 8,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
+    },
+    iaActionText: {
+      flex: 1,
+      fontSize: 14,
+      lineHeight: 20,
+      color: colores.textoSecundario,
+    },
+    iaWarning: {
+      padding: 12,
+      marginTop: 10,
+      borderRadius: 12,
+      backgroundColor: oscuro ? "#493719" : "#FFF3E0",
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
+    },
+    iaWarningText: {
+      flex: 1,
+      fontSize: 12,
+      lineHeight: 18,
+      color: oscuro ? "#FFCA75" : "#8A5700",
+    },
+    iaProvider: {
+      marginTop: 2,
+      fontSize: 11,
+      color: colores.textoSecundario,
+    },
+    iaError: {
+      paddingVertical: 15,
+      fontSize: 13,
+      lineHeight: 19,
+      color: oscuro ? "#FF8585" : "#C62828",
+    },
     sectionTitle: {
       marginBottom: 12,
       fontSize: 21,
@@ -345,6 +568,17 @@ function crearEstilos(
     resultInformation: {
       flex: 1,
       paddingRight: 10,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    resultIcon: {
+      width: 46,
+      height: 46,
+      marginRight: 10,
+      resizeMode: "contain",
+    },
+    resultText: {
+      flex: 1,
     },
     resultName: {
       fontSize: 17,
@@ -450,6 +684,28 @@ function crearEstilos(
       fontSize: 14,
       lineHeight: 20,
       color: colores.textoSecundario,
+    },
+    iaIcon: {
+      width: 44,
+      height: 44,
+      marginRight: 11,
+      borderRadius: 14,
+      backgroundColor: colores.principalClaro,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iaHeaderText: {
+      flex: 1,
+    },
+    iaPriorityLabel: {
+      fontSize: 12,
+      color: colores.textoSecundario,
+    },
+    iaPriorityValue: {
+      marginTop: 3,
+      fontSize: 16,
+      fontWeight: "bold",
+      color: colores.principal,
     },
     center: {
       flex: 1,

@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import type { ImageSourcePropType } from "react-native";
 import {
   Alert,
   FlatList,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -15,6 +17,16 @@ import { useSensor } from "../../Context/SensorContext";
 import { useTheme } from "../../Context/ThemeContext";
 import type { HistorialItem } from "../../Data/historyMock";
 import type { EstadoMedicion } from "../../Models/analysis";
+
+const iconos = {
+  ph: require("../../../assets/iconos/ph.png"),
+  conductividad: require("../../../assets/iconos/conductividad.png"),
+  humedad: require("../../../assets/iconos/humedad.png"),
+  orp: require("../../../assets/iconos/orp.png"),
+  temperatura: require("../../../assets/iconos/temperatura.png"),
+  suelo: require("../../../assets/iconos/suelo.png"),
+  cultivo: require("../../../assets/iconos/cultivo.png"),
+};
 
 function obtenerEstado(estado: EstadoMedicion, oscuro: boolean) {
   switch (estado) {
@@ -86,7 +98,8 @@ function HistoryCard({
               color={colores.principal}
             />
 
-            <Text style={styles.originText} numberOfLines={1}>
+            <Text style={styles.originText} numberOfLines={2}>
+              {item.zona ?? "Zona no identificada"} ·{" "}
               {item.campo_nombre ?? "Campo no identificado"} ·{" "}
               {item.cultivo ?? "Cultivo no identificado"}
             </Text>
@@ -125,29 +138,36 @@ function HistoryCard({
 
 function DetailRow({
   icon,
+  imagen,
   title,
   value,
   color,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
+  imagen?: ImageSourcePropType;
   title: string;
   value: string;
-  color: string;
+  color?: string;
 }) {
   const { oscuro, colores } = useTheme();
   const styles = crearEstilos(colores, oscuro);
+  const colorIcono = color ?? colores.principal;
 
   return (
     <View style={styles.detailRow}>
       <View
         style={[
           styles.detailIcon,
-          {
-            backgroundColor: `${color}${oscuro ? "25" : "15"}`,
+          !imagen && {
+            backgroundColor: `${colorIcono}${oscuro ? "25" : "15"}`,
           },
         ]}
       >
-        <Ionicons name={icon} size={24} color={color} />
+        {imagen ? (
+          <Image source={imagen} style={styles.detailImage} />
+        ) : icon ? (
+          <Ionicons name={icon} size={24} color={colorIcono} />
+        ) : null}
       </View>
 
       <Text style={styles.detailTitle}>{title}</Text>
@@ -372,21 +392,27 @@ export default function HistoryScreen() {
                 </Text>
 
                 <DetailRow
-                  icon="location-outline"
-                  title="Campo"
-                  value={
-                    seleccionado.campo_nombre
-                      ? `${seleccionado.campo_nombre} (${seleccionado.campo_id})`
-                      : "No identificado"
-                  }
+                  icon="map-outline"
+                  title="Zona"
+                  value={seleccionado.zona ?? "No identificada"}
                   color="#2E7D32"
                 />
 
+                {/* Se puede agregar este campo frente a campo_nombre (${seleccionado.campo_id}) */}
                 <DetailRow
-                  icon="leaf-outline"
+                  imagen={iconos.suelo}
+                  title="Campo"
+                  value={
+                    seleccionado.campo_nombre
+                      ? `${seleccionado.campo_nombre} `
+                      : "No identificado"
+                  }
+                />
+
+                <DetailRow
+                  imagen={iconos.cultivo}
                   title="Cultivo"
                   value={seleccionado.cultivo ?? "No identificado"}
-                  color="#48A653"
                 />
 
                 <DetailRow
@@ -399,38 +425,33 @@ export default function HistoryScreen() {
                 <Text style={styles.detailSectionTitle}>Mediciones</Text>
 
                 <DetailRow
-                  icon="water-outline"
+                  imagen={iconos.ph}
                   title="pH"
                   value={seleccionado.ph.toFixed(1)}
-                  color="#3478F6"
                 />
 
                 <DetailRow
-                  icon="flash-outline"
+                  imagen={iconos.conductividad}
                   title="Conductividad"
                   value={`${seleccionado.conductividad.toFixed(2)} dS/m`}
-                  color="#F59E0B"
                 />
 
                 <DetailRow
-                  icon="water-outline"
+                  imagen={iconos.humedad}
                   title="Humedad"
                   value={`${seleccionado.humedad.toFixed(0)} %`}
-                  color="#00ACC1"
                 />
 
                 <DetailRow
-                  icon="pulse-outline"
+                  imagen={iconos.orp}
                   title="ORP"
                   value={`${seleccionado.orp.toFixed(0)} mV`}
-                  color="#9B6DE3"
                 />
 
                 <DetailRow
-                  icon="thermometer-outline"
+                  imagen={iconos.temperatura}
                   title="Temperatura"
                   value={`${seleccionado.temperatura.toFixed(1)} °C`}
-                  color="#E85D3F"
                 />
               </ScrollView>
             )}
@@ -702,6 +723,11 @@ function crearEstilos(
       borderRadius: 13,
       alignItems: "center",
       justifyContent: "center",
+    },
+    detailImage: {
+      width: 41,
+      height: 41,
+      resizeMode: "contain",
     },
     detailTitle: {
       flex: 1,

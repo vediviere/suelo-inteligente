@@ -27,25 +27,25 @@ interface ThemeContextValue {
 const STORAGE_KEY = "tema-aplicacion";
 
 const temaClaro: ThemeColors = {
-  fondo: "#F1ECFA",
-  tarjeta: "#FFFFFF",
-  texto: "#203527",
-  textoSecundario: "#6F7180",
-  borde: "#E7E1F0",
+  fondo: "#EDF2EE",
+  tarjeta: "#F8FAF8",
+  texto: "#203126",
+  textoSecundario: "#657269",
+  borde: "#C8D5CA",
   principal: "#2E7D32",
-  principalClaro: "#E8F5E9",
-  navegacionInactiva: "#7A857A",
+  principalClaro: "#DCEEDE",
+  navegacionInactiva: "#657269",
 };
 
 const temaOscuro: ThemeColors = {
-  fondo: "#15121C",
-  tarjeta: "#231E2C",
-  texto: "#F5F1F8",
-  textoSecundario: "#B9B1C2",
-  borde: "#54287A",
-  principal: "#69BE73",
-  principalClaro: "#263B2B",
-  navegacionInactiva: "#9991A3",
+  fondo: "#101712",
+  tarjeta: "#18221A",
+  texto: "#F0F6F1",
+  textoSecundario: "#A7B6AA",
+  borde: "#31533A",
+  principal: "#6ED47A",
+  principalClaro: "#243B29",
+  navegacionInactiva: "#A7B6AA",
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);

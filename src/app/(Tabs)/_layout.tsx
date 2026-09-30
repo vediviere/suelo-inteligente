@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SensorProvider } from "../../Context/SensorContext";
 import { useTheme } from "../../Context/ThemeContext";
 
-export default function TabsLayout() {
+function TabsNavigator() {
   const insets = useSafeAreaInsets();
   const { colores } = useTheme();
 
@@ -66,5 +67,13 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+  );
+}
+
+export default function TabsLayout() {
+  return (
+    <SensorProvider>
+      <TabsNavigator />
+    </SensorProvider>
   );
 }

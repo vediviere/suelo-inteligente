@@ -7,6 +7,7 @@ export interface Lecturas {
 }
 
 export interface ContextoSuelo {
+  zona: string;
   tipo_textura: string;
   materia_organica_porcentaje: number;
   etapa_cultivo: string;
@@ -22,4 +23,11 @@ export interface LecturaSensor {
   fecha_hora: string;
   lecturas: Lecturas;
   contexto_suelo: ContextoSuelo;
+}
+
+export interface CultivoCatalogo {
+  id: string;
+  nombre: string;
+  nombreCientifico: string;
+  tipo: string;
 }

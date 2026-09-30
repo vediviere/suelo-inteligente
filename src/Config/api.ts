@@ -4,6 +4,7 @@ const URL_API =
 
 export const API_CONFIG = {
   usarMocks: process.env.EXPO_PUBLIC_USAR_MOCKS !== "false",
+  salud: "/health",
 
   datos: {
     url: URL_API,
@@ -11,12 +12,14 @@ export const API_CONFIG = {
     registrarLectura: "/api/lecturas",
     ultimaLectura: "/api/lecturas/ultima",
     lecturas: "/api/lecturas",
+    zonas: "/api/catalogo/zonas",
+    cultivosPorZona: "/api/catalogo/zonas",
   },
 
   analisis: {
     url: URL_API,
-    procesar: "/api/analisis",
-    ultimo: "/api/analisis/ultimo",
-    historial: "/api/analisis",
+    ultimo: "/api/lecturas/analisis/ultimo",
+    historial: "/api/lecturas/analisis",
+    interpretacionBase: "/api/lecturas/analisis",
   },
 };
