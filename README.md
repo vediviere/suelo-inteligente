@@ -1,56 +1,135 @@
-# Welcome to your Expo app 👋
+# TLALCANI — Aplicación móvil
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil desarrollada con React Native y Expo para registrar, visualizar y analizar mediciones del suelo.
 
-## Get started
+## Funcionalidades
 
-1. Install dependencies
+- Inicio de sesión.
+- Selección de zona y cultivo.
+- Registro de lecturas del suelo.
+- Análisis de pH, conductividad, humedad, ORP y temperatura.
+- Consulta del historial.
+- Interpretación generada mediante inteligencia artificial.
+- Almacenamiento temporal de lecturas sin conexión.
+- Sincronización automática con la API.
+- Tema claro y oscuro.
 
-   ```bash
-   npm install
-   ```
+## Tecnologías
 
-2. Start the app
+- React Native
+- Expo
+- Expo Router
+- TypeScript
+- AsyncStorage
+- React Native SVG
 
-   ```bash
-   npx expo start
-   ```
+## Requisitos
 
-In the output, you'll find options to open the app in a
+- Node.js 22 o compatible.
+- npm.
+- Expo Go instalado en el dispositivo móvil.
+- Conexión a Internet.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Instalación
 
 ```bash
-npm run reset-project
+git clone https://github.com/vediviere/suelo-inteligente.git
+cd suelo-inteligente
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Variables de entorno
 
-### Other setup steps
+Crear un archivo `.env` en la carpeta principal:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```env
+EXPO_PUBLIC_API_URL=https://api-suelo-inteligente.onrender.com
+EXPO_PUBLIC_USAR_MOCKS=true
+```
 
-## Learn more
+| Variable                 | Descripción                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_API_URL`    | Dirección de la API utilizada por la aplicación.                                |
+| `EXPO_PUBLIC_USAR_MOCKS` | Activa las lecturas simuladas que sustituyen temporalmente al sensor Bluetooth. |
 
-To learn more about developing your project with Expo, look at the following resources:
+> Para esta demostración, `EXPO_PUBLIC_USAR_MOCKS` debe permanecer en `true`.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Ejecución local
 
-## Join the community
+```bash
+npx expo start
+```
 
-Join our community of developers creating universal apps.
+Si existen problemas de red:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx expo start --tunnel
+```
+
+Para limpiar la caché:
+
+```bash
+npx expo start --tunnel --clear
+```
+
+Después, escanear el código QR con Expo Go.
+
+## Credenciales de demostración
+
+```text
+Correo: demo@suelo.app
+Contraseña: Demo1234
+```
+
+## Generación de la APK
+
+El perfil `preview` de `eas.json` debe contener:
+
+```json
+"env": {
+  "EXPO_PUBLIC_API_URL": "https://api-suelo-inteligente.onrender.com",
+  "EXPO_PUBLIC_USAR_MOCKS": "true"
+}
+```
+
+Generar la APK:
+
+```bash
+eas build -p android --profile preview
+```
+
+## Flujo de la demostración
+
+1. El usuario inicia sesión.
+2. Selecciona una zona y un cultivo.
+3. La aplicación genera una lectura simulada.
+4. La lectura se guarda temporalmente.
+5. Si existe conexión, se envía a la API.
+6. La API procesa los valores.
+7. La aplicación muestra el análisis.
+8. Si no existe conexión, la lectura queda pendiente.
+9. Cuando regresa la conexión, la aplicación intenta sincronizarla.
+
+## Estructura principal
+
+```text
+assets/
+src/
+├── Config/
+├── Context/
+├── Data/
+├── Models/
+├── Services/
+└── app/
+    ├── (Tabs)/
+    ├── _layout.tsx
+    └── login.tsx
+```
+
+## Consideraciones
+
+- Bluetooth no está implementado en esta demostración.
+- Las lecturas simuladas representan los datos que posteriormente enviará el sensor.
+- Las lecturas sí se envían a la API publicada en Render.
+- Render puede tardar algunos segundos en responder después de un periodo de inactividad.
+- La clave de Groq nunca debe colocarse en la aplicación móvil.
