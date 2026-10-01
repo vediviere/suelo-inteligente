@@ -12,6 +12,7 @@
     },
     "android": {
       "package": "com.vediv.suelointeligente",
+      "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#101712",
         "foregroundImage": "./assets/images/tlalcani-icon.png"

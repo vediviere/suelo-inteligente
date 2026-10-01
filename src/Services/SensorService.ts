@@ -3,7 +3,7 @@ import { escenariosMock } from "../Data/scenarios";
 import {
   EstadoMedicion,
   InterpretacionIa,
-  ResultadoAnalisis
+  ResultadoAnalisis,
 } from "../Models/analysis";
 import { CultivoCatalogo, LecturaSensor } from "../Models/sensor";
 import { obtenerJson } from "./HttpService";
@@ -108,6 +108,7 @@ export async function obtenerInterpretacionIa(
 }
 
 export async function obtenerLecturaActual(): Promise<LecturaSensor> {
+  console.log("USAR MOCKS REAL:", API_CONFIG.usarMocks);
   if (API_CONFIG.usarMocks) {
     await esperar(500);
 

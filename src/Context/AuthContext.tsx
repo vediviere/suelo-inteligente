@@ -1,13 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    ReactNode,
-    createContext,
-    useContext,
-    useEffect,
-    useState,
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
 
-const SESSION_KEY = "@suelo_inteligente_session";
+const SESSION_KEY = "@tlalcani_session";
 
 interface Sesion {
   nombre: string;

@@ -12,7 +12,7 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-suelo-inteligente.onrender.com",
-        "EXPO_PUBLIC_USAR_MOCKS": "false"
+        "EXPO_PUBLIC_USAR_MOCKS": "true"
       }
     },
     "production": {}

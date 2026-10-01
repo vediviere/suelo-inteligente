@@ -21,7 +21,6 @@ import Svg, {
   Path,
   Image as SvgImage,
 } from "react-native-svg";
-import { API_CONFIG } from "../../Config/api";
 import { useSensor } from "../../Context/SensorContext";
 import { useTheme } from "../../Context/ThemeContext";
 import type { EstadoMedicion } from "../../Models/analysis";
@@ -462,8 +461,6 @@ export default function HomeScreen() {
                   },
                 ]}
               >
-                {API_CONFIG.usarMocks ? "Simulado" : "Sensor"}
-                {" · "}
                 {conexionVisual.texto}
               </Text>
             </View>
@@ -554,6 +551,54 @@ export default function HomeScreen() {
         </View>
       )}
 
+      <View style={[styles.climateCard, themeStyles.background]}>
+        <View style={styles.climateTitleContainer}>
+          <Text style={[styles.climateTitle, themeStyles.text]}>
+            Clima local
+          </Text>
+        </View>
+
+        {cargandoClima && !clima ? (
+          <ActivityIndicator color="#3478F6" />
+        ) : errorClima && !clima ? (
+          <View style={styles.climateErrorContainer}>
+            <Ionicons name="cloud-offline-outline" size={20} color="#C62828" />
+            <Text style={styles.climateError}>Sin datos</Text>
+          </View>
+        ) : clima ? (
+          <View style={styles.climateValues}>
+            <ClimateItem
+              icon="sunny-outline"
+              value={`${clima.temperatura.toFixed(1)}°`}
+            />
+
+            <View
+              style={[
+                styles.climateDivider,
+                { backgroundColor: colores.borde },
+              ]}
+            />
+
+            <ClimateItem
+              icon="water-outline"
+              value={`${clima.humedad.toFixed(0)}%`}
+            />
+
+            <View
+              style={[
+                styles.climateDivider,
+                { backgroundColor: colores.borde },
+              ]}
+            />
+
+            <ClimateItem
+              icon="rainy-outline"
+              value={`${clima.precipitacion.toFixed(1)}`}
+            />
+          </View>
+        ) : null}
+      </View>
+
       <View style={[styles.selectionCard, themeStyles.card]}>
         <View style={styles.selectionHeader}>
           <Ionicons
@@ -632,53 +677,36 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={[styles.climateCard, themeStyles.background]}>
-        <View style={styles.climateTitleContainer}>
-          <Text style={[styles.climateTitle, themeStyles.text]}>
-            Clima local
-          </Text>
-        </View>
-
-        {cargandoClima && !clima ? (
-          <ActivityIndicator color="#3478F6" />
-        ) : errorClima && !clima ? (
-          <View style={styles.climateErrorContainer}>
-            <Ionicons name="cloud-offline-outline" size={20} color="#C62828" />
-            <Text style={styles.climateError}>Sin datos</Text>
-          </View>
-        ) : clima ? (
-          <View style={styles.climateValues}>
-            <ClimateItem
-              icon="sunny-outline"
-              value={`${clima.temperatura.toFixed(1)}°`}
+      <Pressable
+        style={({ pressed }) => [
+          styles.refreshButton,
+          { backgroundColor: colores.principal },
+          pressed && styles.refreshButtonPressed,
+          actualizando && styles.refreshButtonDisabled,
+        ]}
+        onPress={actualizarTodo}
+        disabled={actualizando}
+      >
+        {actualizando ? (
+          <ActivityIndicator color={oscuro ? "#112516" : "#FFFFFF"} />
+        ) : (
+          <>
+            <Ionicons
+              name="refresh-outline"
+              size={21}
+              color={oscuro ? "#112516" : "#FFFFFF"}
             />
-
-            <View
+            <Text
               style={[
-                styles.climateDivider,
-                { backgroundColor: colores.borde },
+                styles.refreshButtonText,
+                oscuro && themeStyles.buttonText,
               ]}
-            />
-
-            <ClimateItem
-              icon="water-outline"
-              value={`${clima.humedad.toFixed(0)}%`}
-            />
-
-            <View
-              style={[
-                styles.climateDivider,
-                { backgroundColor: colores.borde },
-              ]}
-            />
-
-            <ClimateItem
-              icon="rainy-outline"
-              value={`${clima.precipitacion.toFixed(1)}`}
-            />
-          </View>
-        ) : null}
-      </View>
+            >
+              Actualizar información
+            </Text>
+          </>
+        )}
+      </Pressable>
 
       <View style={[styles.statusCard, themeStyles.card]}>
         <View style={styles.indexSide}>
@@ -824,37 +852,6 @@ export default function HomeScreen() {
           </View>
         </View>
       )} */}
-
-      <Pressable
-        style={({ pressed }) => [
-          styles.refreshButton,
-          { backgroundColor: colores.principal },
-          pressed && styles.refreshButtonPressed,
-          actualizando && styles.refreshButtonDisabled,
-        ]}
-        onPress={actualizarTodo}
-        disabled={actualizando}
-      >
-        {actualizando ? (
-          <ActivityIndicator color={oscuro ? "#112516" : "#FFFFFF"} />
-        ) : (
-          <>
-            <Ionicons
-              name="refresh-outline"
-              size={21}
-              color={oscuro ? "#112516" : "#FFFFFF"}
-            />
-            <Text
-              style={[
-                styles.refreshButtonText,
-                oscuro && themeStyles.buttonText,
-              ]}
-            >
-              Actualizar información
-            </Text>
-          </>
-        )}
-      </Pressable>
     </ScrollView>
   );
 }
@@ -972,6 +969,8 @@ const styles = StyleSheet.create({
     marginHorizontal: -20,
     marginTop: -8,
     marginBottom: 2,
+    marginRight: -20,
+    marginLeft: -10,
     backgroundColor: "#EDF2EE",
     flexDirection: "row",
     alignItems: "center",
@@ -1022,6 +1021,7 @@ const styles = StyleSheet.create({
     minHeight: 175,
     padding: 16,
     marginBottom: 15,
+    marginTop: 18,
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
@@ -1188,9 +1188,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   contextBar: {
+    marginTop: 2,
     minHeight: 60,
     paddingHorizontal: 16,
-    marginBottom: 14,
+    marginBottom: -8,
     borderRadius: 18,
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
